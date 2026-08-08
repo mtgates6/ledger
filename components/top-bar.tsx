@@ -1,0 +1,17 @@
+import { signOut } from "@/app/actions";
+
+export function TopBar({ title }: { title: string }) {
+  return (
+    <header className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-950/95 px-4 py-3.5 backdrop-blur safe-top">
+      <h1 className="text-lg font-semibold">{title}</h1>
+      <form action={signOut}>
+        <button
+          type="submit"
+          className="text-xs text-slate-500 hover:text-slate-300"
+        >
+          Sign out
+        </button>
+      </form>
+    </header>
+  );
+}

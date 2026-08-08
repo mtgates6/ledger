@@ -12,24 +12,37 @@ not built yet — see [Adding Plaid later](#adding-plaid-later).
 ## Stack
 
 - **Next.js 16** (App Router, TypeScript, Tailwind) — hosted on **Vercel**
-- **Supabase** — Postgres database + auth (magic-link email sign-in), free tier
+- **Supabase** — just the Postgres database (no Supabase Auth), free tier
 - **Recharts** for the spending charts, **PapaParse** for CSV parsing
+
+## How access works
+
+This is a single-user app, so there's no login system, no email, no
+account — just one passcode you set yourself that gates the whole thing.
+Enter it once on a device (phone, laptop, whatever) and it stays unlocked
+there for a year via a signed cookie; a **Lock** button in the top bar clears
+it on demand.
+
+Behind that gate, the app talks to Supabase Postgres using the **service
+role key** — never the anon/public key, and never from the browser — so
+there's no per-user auth or row-level-security matching to manage. Every row
+in the database just belongs to one fixed id (`OWNER_ID` in
+`lib/constants.ts`). Row-level security is still turned on for every table
+as a backstop: if the service role key ever leaked, that's a real problem
+regardless, but it means the public/anon key genuinely can't read or write
+anything even if it were somehow exposed.
 
 ## 1. Create the Supabase project
 
 1. Go to [supabase.com](https://supabase.com), create a free project.
-2. In **Project Settings → API**, copy the **Project URL** and **anon public
-   key**.
-3. In **Project Settings → Authentication → URL Configuration**, add your
-   local and production URLs to **Redirect URLs**:
-   - `http://localhost:3000/auth/callback`
-   - `https://<your-vercel-domain>/auth/callback`
-4. Open the **SQL Editor** and run the migration in
+2. In **Project Settings → API**, copy the **Project URL** and the
+   **service_role key** (not the anon/publishable key — keep this one
+   secret, it has full database access).
+3. Open the **SQL Editor** and run the migration in
    [`supabase/migrations/0001_init.sql`](./supabase/migrations/0001_init.sql).
    This creates the tables (categories, transactions, category rules,
-   accounts, budgets), row-level security policies so your data is only ever
-   readable by you, and a trigger that seeds sensible default categories and
-   keyword rules the moment you sign up.
+   accounts, budgets) and seeds a starter set of default categories and
+   keyword rules, all owned by the app's one fixed user id.
 
    Alternatively, if you use the [Supabase CLI](https://supabase.com/docs/guides/cli):
    ```bash
@@ -39,15 +52,17 @@ not built yet — see [Adding Plaid later](#adding-plaid-later).
 
 ## 2. Configure environment variables
 
-Copy `.env.local.example` to `.env.local` and fill in the values from step 1:
+Copy `.env.local.example` to `.env.local` and fill in the values:
 
 ```bash
 cp .env.local.example .env.local
 ```
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_URL=https://xxxxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...          # from step 1
+APP_PASSCODE=pick-something-only-you-know
+APP_SESSION_SECRET=                        # generate with: openssl rand -hex 32
 ```
 
 ## 3. Run locally
@@ -57,19 +72,20 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), enter your email, and
-click the magic link Supabase emails you. You'll land on the dashboard with
+Open [http://localhost:3000](http://localhost:3000), enter the passcode you
+set, and you're in — no email, no sign-up. You'll land on the dashboard with
 a "Manual / Cash" account and a starter set of categories already in place.
 
 ## 4. Deploy to Vercel
 
 1. Push this repo to GitHub.
 2. In Vercel, **Import Project** from that repo.
-3. Add the same two environment variables (`NEXT_PUBLIC_SUPABASE_URL`,
-   `NEXT_PUBLIC_SUPABASE_ANON_KEY`) in **Project Settings → Environment
-   Variables**.
-4. Deploy. Then add the deployed URL's `/auth/callback` to Supabase's
-   Redirect URLs (step 1.3) if you haven't already.
+3. Add the four environment variables from step 2
+   (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `APP_PASSCODE`,
+   `APP_SESSION_SECRET`) in **Project Settings → Environment Variables**.
+   None of them are prefixed `NEXT_PUBLIC_`, so none of them ship to the
+   browser.
+4. Deploy.
 
 ## 5. Install on iOS
 
@@ -127,15 +143,19 @@ ready:
 
 ```
 app/
+  unlock/                 passcode gate (page, form, unlock/lock actions)
   (app)/dashboard/        month + year overview, charts, budget progress
   (app)/transactions/     browse/filter, manual entry, edit, CSV import
   (app)/categories/       category + keyword-rule management
   actions.ts              server actions (all writes go through here)
 lib/
+  session.ts               passcode check + signed session cookie
+  constants.ts              the app's one fixed owner id
   data.ts                 read queries
   summary.ts              category/month aggregation
   categorize.ts            keyword auto-categorization
   budget-month.ts          budget-month date helpers
   csv.ts                   CSV date/amount parsing + de-dupe fingerprint
-supabase/migrations/       schema, RLS policies, default-category seed
+supabase/migrations/       schema, RLS (enabled, no policies), default-category seed
+proxy.ts                  checks the session cookie on every request
 ```

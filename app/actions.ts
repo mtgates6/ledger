@@ -1,9 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { toBudgetMonth } from "@/lib/budget-month";
+import { OWNER_ID } from "@/lib/constants";
 import type { TransactionType } from "@/lib/types";
 
 function revalidateTransactionViews() {
@@ -24,13 +24,9 @@ export interface TransactionInput {
 
 export async function createTransaction(input: TransactionInput) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
 
   const { error } = await supabase.from("transactions").insert({
-    user_id: user.id,
+    user_id: OWNER_ID,
     amount: input.amount,
     type: input.type,
     description: input.description,
@@ -93,13 +89,9 @@ export async function bulkImportTransactions(
   rows: ImportRow[]
 ) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
 
   const payload = rows.map((row) => ({
-    user_id: user.id,
+    user_id: OWNER_ID,
     account_id: accountId,
     amount: row.amount,
     type: row.type,
@@ -129,13 +121,9 @@ export interface CategoryInput {
 
 export async function createCategory(input: CategoryInput) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
 
   const { error } = await supabase.from("categories").insert({
-    user_id: user.id,
+    user_id: OWNER_ID,
     name: input.name,
     color: input.color,
     icon: input.icon,
@@ -172,13 +160,9 @@ export async function archiveCategory(id: string) {
 
 export async function createCategoryRule(categoryId: string, keyword: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
 
   const { error } = await supabase.from("category_rules").insert({
-    user_id: user.id,
+    user_id: OWNER_ID,
     category_id: categoryId,
     keyword: keyword.toLowerCase(),
   });
@@ -203,15 +187,11 @@ export async function setBudget(
   amount: number
 ) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
 
   const { error } = await supabase
     .from("budgets")
     .upsert(
-      { user_id: user.id, category_id: categoryId, month, amount },
+      { user_id: OWNER_ID, category_id: categoryId, month, amount },
       { onConflict: "user_id,category_id,month" }
     );
 
@@ -221,24 +201,14 @@ export async function setBudget(
 
 export async function createAccount(name: string, type: "manual" | "csv" = "csv") {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
 
   const { data, error } = await supabase
     .from("accounts")
-    .insert({ user_id: user.id, name, type })
+    .insert({ user_id: OWNER_ID, name, type })
     .select()
     .single();
 
   if (error) throw error;
   revalidatePath("/transactions/import");
   return data;
-}
-
-export async function signOut() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/login");
 }

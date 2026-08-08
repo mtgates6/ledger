@@ -60,7 +60,7 @@ export interface Budget {
   created_at: string;
 }
 
-// Minimal Database type placeholder so @supabase/ssr generics have
+// Minimal Database type placeholder so the Supabase client generics have
 // something to bind to without generating a full Supabase CLI schema.
 // Swap for `supabase gen types typescript` output if you want full
 // query-level type safety later.

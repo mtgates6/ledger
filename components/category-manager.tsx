@@ -7,8 +7,10 @@ import {
   createCategory,
   createCategoryRule,
   deleteCategoryRule,
+  updateCategory,
 } from "@/app/actions";
-import type { Category, CategoryRule } from "@/lib/types";
+import { BUDGET_GROUPS, BUDGET_GROUP_META } from "@/lib/budget-groups";
+import type { BudgetGroup, Category, CategoryRule } from "@/lib/types";
 
 const COLORS = [
   "#f97316",
@@ -40,6 +42,7 @@ export function CategoryManager({
   const [icon, setIcon] = useState("🏷️");
   const [color, setColor] = useState(COLORS[0]);
   const [kind, setKind] = useState<"expense" | "income">("expense");
+  const [budgetGroup, setBudgetGroup] = useState<BudgetGroup | null>(null);
 
   function refresh() {
     router.refresh();
@@ -49,8 +52,9 @@ export function CategoryManager({
     e.preventDefault();
     if (!name.trim()) return;
     startTransition(async () => {
-      await createCategory({ name: name.trim(), icon, color, kind });
+      await createCategory({ name: name.trim(), icon, color, kind, budgetGroup });
       setName("");
+      setBudgetGroup(null);
       setShowNew(false);
       refresh();
     });
@@ -60,6 +64,13 @@ export function CategoryManager({
     if (!confirm("Archive this category? Past transactions keep it, but it won't show up for new ones.")) return;
     startTransition(async () => {
       await archiveCategory(id);
+      refresh();
+    });
+  }
+
+  function handleGroupChange(id: string, group: BudgetGroup | null) {
+    startTransition(async () => {
+      await updateCategory(id, { budgetGroup: group });
       refresh();
     });
   }
@@ -78,6 +89,17 @@ export function CategoryManager({
               <span className="flex items-center gap-2 text-sm font-medium">
                 <span>{category.icon}</span>
                 {category.name}
+                {category.budget_group && (
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[10px] font-normal"
+                    style={{
+                      backgroundColor: `${BUDGET_GROUP_META[category.budget_group].color}26`,
+                      color: BUDGET_GROUP_META[category.budget_group].color,
+                    }}
+                  >
+                    {BUDGET_GROUP_META[category.budget_group].label}
+                  </span>
+                )}
                 <span className="text-xs text-slate-500">
                   ({categoryRules.length} rule{categoryRules.length === 1 ? "" : "s"})
                 </span>
@@ -87,6 +109,45 @@ export function CategoryManager({
 
             {isOpen && (
               <div className="border-t border-slate-800 px-4 py-3">
+                {category.kind === "expense" && (
+                  <div className="mb-3">
+                    <p className="mb-1.5 text-xs text-slate-500">
+                      50/30/20 group
+                    </p>
+                    <div className="flex gap-1.5 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => handleGroupChange(category.id, null)}
+                        disabled={isPending}
+                        className={`rounded-lg px-2.5 py-1.5 ${
+                          !category.budget_group ? "bg-slate-800" : "bg-slate-950 text-slate-500"
+                        }`}
+                      >
+                        None
+                      </button>
+                      {BUDGET_GROUPS.map((group) => (
+                        <button
+                          type="button"
+                          key={group}
+                          onClick={() => handleGroupChange(category.id, group)}
+                          disabled={isPending}
+                          className={`rounded-lg px-2.5 py-1.5 ${
+                            category.budget_group === group
+                              ? "bg-slate-800"
+                              : "bg-slate-950 text-slate-500"
+                          }`}
+                          style={
+                            category.budget_group === group
+                              ? { color: BUDGET_GROUP_META[group].color }
+                              : undefined
+                          }
+                        >
+                          {BUDGET_GROUP_META[group].label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <RuleEditor categoryId={category.id} rules={categoryRules} onChange={refresh} />
                 <button
                   onClick={() => handleArchive(category.id)}
@@ -160,6 +221,38 @@ export function CategoryManager({
               Income
             </button>
           </div>
+
+          {kind === "expense" && (
+            <div>
+              <p className="mb-1.5 text-xs text-slate-500">
+                50/30/20 group (optional)
+              </p>
+              <div className="flex gap-1.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setBudgetGroup(null)}
+                  className={`rounded-lg px-2.5 py-1.5 ${
+                    !budgetGroup ? "bg-slate-800" : "bg-slate-950 text-slate-500"
+                  }`}
+                >
+                  None
+                </button>
+                {BUDGET_GROUPS.map((group) => (
+                  <button
+                    type="button"
+                    key={group}
+                    onClick={() => setBudgetGroup(group)}
+                    className={`rounded-lg px-2.5 py-1.5 ${
+                      budgetGroup === group ? "bg-slate-800" : "bg-slate-950 text-slate-500"
+                    }`}
+                    style={budgetGroup === group ? { color: BUDGET_GROUP_META[group].color } : undefined}
+                  >
+                    {BUDGET_GROUP_META[group].label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-2">
             <button

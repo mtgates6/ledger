@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { toBudgetMonth } from "@/lib/budget-month";
 import { OWNER_ID } from "@/lib/constants";
-import type { TransactionType } from "@/lib/types";
+import type { BudgetGroup, TransactionType } from "@/lib/types";
 
 function revalidateTransactionViews() {
   revalidatePath("/dashboard");
@@ -117,6 +117,7 @@ export interface CategoryInput {
   color: string;
   icon: string;
   kind: "expense" | "income";
+  budgetGroup?: BudgetGroup | null;
 }
 
 export async function createCategory(input: CategoryInput) {
@@ -128,6 +129,7 @@ export async function createCategory(input: CategoryInput) {
     color: input.color,
     icon: input.icon,
     kind: input.kind,
+    budget_group: input.budgetGroup ?? null,
   });
 
   if (error) throw error;
@@ -139,9 +141,17 @@ export async function updateCategory(
   input: Partial<CategoryInput>
 ) {
   const supabase = await createClient();
+
+  const patch: Record<string, unknown> = {};
+  if (input.name !== undefined) patch.name = input.name;
+  if (input.color !== undefined) patch.color = input.color;
+  if (input.icon !== undefined) patch.icon = input.icon;
+  if (input.kind !== undefined) patch.kind = input.kind;
+  if (input.budgetGroup !== undefined) patch.budget_group = input.budgetGroup;
+
   const { error } = await supabase
     .from("categories")
-    .update(input)
+    .update(patch)
     .eq("id", id);
   if (error) throw error;
   revalidatePath("/categories");

@@ -1,6 +1,7 @@
 export type TransactionType = "expense" | "income";
 export type TransactionSource = "manual" | "csv" | "plaid";
 export type CategoryKind = "expense" | "income";
+export type BudgetGroup = "needs" | "wants" | "savings";
 
 export interface Category {
   id: string;
@@ -11,6 +12,7 @@ export interface Category {
   kind: CategoryKind;
   is_archived: boolean;
   sort_order: number;
+  budget_group: BudgetGroup | null;
   created_at: string;
 }
 

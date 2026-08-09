@@ -38,11 +38,13 @@ anything even if it were somehow exposed.
 2. In **Project Settings → API**, copy the **Project URL** and the
    **service_role key** (not the anon/publishable key — keep this one
    secret, it has full database access).
-3. Open the **SQL Editor** and run the migration in
-   [`supabase/migrations/0001_init.sql`](./supabase/migrations/0001_init.sql).
-   This creates the tables (categories, transactions, category rules,
-   accounts, budgets) and seeds a starter set of default categories and
-   keyword rules, all owned by the app's one fixed user id.
+3. Open the **SQL Editor** and run each file in
+   [`supabase/migrations/`](./supabase/migrations/), in filename order
+   (`0001_init.sql`, then `0002_budget_groups.sql`, etc.). `0001` creates the
+   tables (categories, transactions, category rules, accounts, budgets) and
+   seeds a starter set of default categories and keyword rules, all owned by
+   the app's one fixed user id. Later files are additive — safe to re-run,
+   and safe to run against a database that already has data in it.
 
    Alternatively, if you use the [Supabase CLI](https://supabase.com/docs/guides/cli):
    ```bash
@@ -108,6 +110,21 @@ field on the transaction form. Pay rent on July 28th for August? Set its
 budget month to August, and July's spending total won't include it — August's
 will, right where you'd expect it whether or not the calendar cooperated.
 
+## 50/30/20 budgeting
+
+Every expense category can optionally belong to a group — **Needs**,
+**Wants**, or **Savings** — set on the **Categories** page (tap a category to
+expand it). The dashboard then shows actual spending in each group as a
+percentage, next to the classic 50/30/20 targets, with a tick mark on each
+bar showing where the target sits.
+
+That percentage is measured against your logged **income** for the month
+when there is any; if you haven't logged income, it falls back to measuring
+against your total tracked needs+wants+savings spending instead, so the
+breakdown still means something even if you only track outflow. Categories
+without a group (by default: Income, Other) are left out of the breakdown
+until you assign them.
+
 ## Auto-categorization
 
 Every category has a set of keywords (editable on the **Categories** page).
@@ -152,7 +169,8 @@ lib/
   session.ts               passcode check + signed session cookie
   constants.ts              the app's one fixed owner id
   data.ts                 read queries
-  summary.ts              category/month aggregation
+  summary.ts              category/month/group aggregation
+  budget-groups.ts          50/30/20 group labels, colors, targets
   categorize.ts            keyword auto-categorization
   budget-month.ts          budget-month date helpers
   csv.ts                   CSV date/amount parsing + de-dupe fingerprint

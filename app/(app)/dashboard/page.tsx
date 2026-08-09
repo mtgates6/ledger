@@ -8,10 +8,16 @@ import {
   getTransactionsForYear,
 } from "@/lib/data";
 import { currentBudgetMonth, formatCurrency } from "@/lib/budget-month";
-import { summarizeByCategory, summarizeByMonth, totalByType } from "@/lib/summary";
+import {
+  summarizeByCategory,
+  summarizeByGroup,
+  summarizeByMonth,
+  totalByType,
+} from "@/lib/summary";
 import { MonthPicker } from "@/components/month-picker";
 import { CategoryPieChart } from "@/components/category-pie-chart";
 import { CategoryBreakdownList } from "@/components/category-breakdown-list";
+import { FiftyThirtyTwenty } from "@/components/fifty-thirty-twenty";
 import { YearlyTrendChart } from "@/components/yearly-trend-chart";
 import { TopBar } from "@/components/top-bar";
 
@@ -41,6 +47,7 @@ export default async function DashboardPage({
     categories,
     budgets
   );
+  const groupSummary = summarizeByGroup(monthTransactions, categories);
 
   const yearTransactions =
     view === "year" ? await getTransactionsForYear(supabase, year) : [];
@@ -87,6 +94,8 @@ export default async function DashboardPage({
                 </p>
               </div>
             </div>
+
+            <FiftyThirtyTwenty summary={groupSummary} />
 
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
               <CategoryPieChart data={categorySummary} />

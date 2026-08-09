@@ -152,7 +152,7 @@ export function CsvImportWizard({
 
   if (resultCount !== null) {
     return (
-      <div className="flex flex-col gap-4 px-4 py-5">
+      <div className="flex flex-col gap-4 px-4 pb-5 header-offset">
         <div className="rounded-xl border border-emerald-900 bg-emerald-950/50 p-5 text-sm text-emerald-300">
           Imported {resultCount} transaction{resultCount === 1 ? "" : "s"}.
           {resultCount < staged.filter((r) => r.include).length && (
@@ -174,7 +174,7 @@ export function CsvImportWizard({
 
   if (step === "upload") {
     return (
-      <div className="flex flex-col gap-4 px-4 py-5">
+      <div className="flex flex-col gap-4 px-4 pb-5 header-offset">
         <p className="text-sm text-slate-400">
           Export a CSV statement from your bank or card, then upload it here.
           Nothing leaves your browser except what you choose to import.
@@ -198,7 +198,7 @@ export function CsvImportWizard({
 
   if (step === "map") {
     return (
-      <div className="flex flex-col gap-5 px-4 py-5">
+      <div className="flex flex-col gap-5 px-4 pb-5 header-offset">
         <p className="text-sm text-slate-400">
           Match your file&apos;s columns ({fileRows.length} rows found).
         </p>
@@ -236,7 +236,7 @@ export function CsvImportWizard({
   const includedCount = staged.filter((r) => r.include).length;
 
   return (
-    <div className="flex flex-col gap-4 px-4 py-5">
+    <div className="flex flex-col gap-4 px-4 pb-5 header-offset">
       <div className="flex flex-col gap-2">
         <label className="flex flex-col gap-1.5">
           <span className="text-xs text-slate-400">Import into account</span>

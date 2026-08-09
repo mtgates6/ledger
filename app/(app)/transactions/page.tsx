@@ -30,7 +30,7 @@ export default async function TransactionsPage({
   return (
     <div>
       <TopBar title="Activity" />
-      <div className="flex flex-col gap-4 px-4 py-5">
+      <div className="flex flex-col gap-4 px-4 pb-5 header-offset">
         <MonthPicker budgetMonth={budgetMonth} />
 
         <div className="flex justify-between text-sm text-slate-400">

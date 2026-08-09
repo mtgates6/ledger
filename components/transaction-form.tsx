@@ -124,7 +124,7 @@ export function TransactionForm({
   const monthsDiffer = dateMonthLabel !== budgetMonthLabel;
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-4 py-5">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-4 pb-5 header-offset">
       <div className="flex gap-2 rounded-xl bg-slate-900 p-1 text-sm">
         <button
           type="button"

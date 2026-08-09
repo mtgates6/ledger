@@ -24,3 +24,11 @@ body {
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* TopBar is `fixed`, not `sticky` (iOS Safari mispositions sticky headers
+   after a scroll round-trip), so page content needs matching top padding
+   to clear it instead of relying on normal document flow. Keep in sync
+   with the header's own rendered height in components/top-bar.tsx. */
+.header-offset {
+  padding-top: calc(3.75rem + env(safe-area-inset-top));
+}

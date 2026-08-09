@@ -49,7 +49,7 @@ export default async function DashboardPage({
   return (
     <div>
       <TopBar title="Overview" />
-      <div className="flex flex-col gap-6 px-4 py-5">
+      <div className="flex flex-col gap-6 px-4 pb-5 header-offset">
         <div className="flex gap-2 rounded-xl bg-slate-900 p-1 text-sm">
           <Link
             href={`/dashboard?month=${budgetMonth}&view=month`}

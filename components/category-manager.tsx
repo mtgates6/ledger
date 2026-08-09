@@ -65,7 +65,7 @@ export function CategoryManager({
   }
 
   return (
-    <div className="flex flex-col gap-3 px-4 py-5">
+    <div className="flex flex-col gap-3 px-4 pb-5 header-offset">
       {categories.map((category) => {
         const categoryRules = rules.filter((r) => r.category_id === category.id);
         const isOpen = expanded === category.id;
